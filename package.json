@@ -1,0 +1,19 @@
+{
+  "name": "wvw_datacollector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Flombo/WVW_DataCollector.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Flombo/WVW_DataCollector/issues"
+  },
+  "homepage": "https://github.com/Flombo/WVW_DataCollector#readme"
+}

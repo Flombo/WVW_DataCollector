@@ -3,24 +3,52 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const request=require('request');
+const { Kafka } = require('kafkajs')
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname));
 
-app.get('/', (req, response)=>{
-    const wvwURL = "https://api.guildwars2.com/v1/wvw/matches.json";
 
-    request.get(wvwURL, (err,res,body) => {
-        if(err) console.log(err);
-        response.send(body);
-    })
+const kafka = new Kafka({
+    clientId: 'my-app',
+    brokers: ['localhost:9092']
 })
 
-function callAPI(){
-    const wvwURL = "https://api.guildwars2.com/v1/wvw/matches.json";
+let producer;
 
-    request.get(wvwURL, (err,res,body) => {
+async function initProducer(){
+    producer = kafka.producer()
+    await producer.connect()
+}
+
+async function initConsumer(){
+    const consumer = kafka.consumer({ groupId: 'test-group' })
+
+    await consumer.connect()
+    await consumer.subscribe({ topic: 'wvwDataCollector', fromBeginning: true })
+
+    await consumer.run({
+        eachMessage: async ({ topic, partition, message }) => {
+            console.log({
+                value: message.value.toString(),
+            })
+        },
+    })
+}
+
+initProducer();
+initConsumer();
+
+function callAPI(){
+    const wvwURL = "https://api.guildwars2.com/v2/wvw/matches/2-1.json";
+
+    request.get(wvwURL,async (err,res,body) => {
         if(err) console.log(err);
-        console.log(body);
+        await producer.send({
+            topic: 'wvwDataCollector',
+            messages: [
+                { value: body },
+            ],
+        })
     })
 }
 

@@ -45,17 +45,21 @@ initProducer();
 function callAPI(){
     producerMatchMap.forEach((producer, topicName) => {
         request.get(wvwURL + topicName + '.json', async (err,res,body) => {
-            if(err) console.log(err);
+            try {
+                if (err) console.log(err);
 
-            let bodyJSON = JSON.parse(body);
-            bodyJSON['timestamp'] = Date.now();
+                await producer.send({
+                    topic: topicName,
+                    messages: [
+                        {
+                            value : body
+                        }
+                    ]
+                });
 
-            await producer.send({
-                topic: topicName,
-                messages: [
-                    { value: JSON.stringify(bodyJSON) },
-                ],
-            });
+            } catch (exception) {
+                console.log(exception);
+            }
         });
     });
 }

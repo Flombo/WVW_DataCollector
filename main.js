@@ -7,7 +7,8 @@ const { Kafka } = require('kafkajs')
 const cron = require('node-cron');
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname));
-
+const { Server } = require("socket.io");
+const io = new Server(server);
 
 const kafka = new Kafka({
     clientId: 'producersite',
@@ -69,7 +70,29 @@ cron.schedule('* * * * * *', function() {
 });
 
 app.get('/', (req, res) => {
-   res.send('hello');
+   res.render('index', { dataFetchError : false });
+});
+
+async function fetchVictoryPointsByConsumer() {
+    const consumer = kafka.consumer({groupId: 'test-group'})
+
+    await consumer.connect()
+    await consumer.subscribe({topic: '2-1', fromBeginning: true})
+
+    await consumer.run({
+        eachMessage : async ({message}) => {
+            io.emit('victoryPoints', message.value.toString());
+        },
+    });
+}
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on('connected', (msg) => {
+        if(msg === 'victoryPoints') {
+            fetchVictoryPointsByConsumer();
+        }
+    });
 });
 
 server.listen(3000, '141.28.73.146');

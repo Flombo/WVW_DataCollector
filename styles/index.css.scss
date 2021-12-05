@@ -1,0 +1,27 @@
+html {
+    top: 0;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    background-color: #252525;
+
+    body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        top: 0;
+        display: flex;
+
+        #victoryPointsChart {
+            width: 300px;
+            max-height: 300px;
+            justify-self: center;
+        }
+
+        #dataFetchError {
+            background-color: #252525;
+            border: 5px solid salmon;
+            color: white;
+        }
+    }
+}

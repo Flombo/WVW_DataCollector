@@ -81,7 +81,7 @@ async function fetchVictoryPointsByConsumer() {
 
     await consumer.run({
         eachMessage : async ({message}) => {
-            io.emit('victoryPoints', message.value.toString());
+            io.emit('sentscores', message.value.toString());
         },
     });
 }
@@ -89,7 +89,7 @@ async function fetchVictoryPointsByConsumer() {
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('connected', (msg) => {
-        if(msg === 'victoryPoints') {
+        if(msg === 'scores') {
             fetchVictoryPointsByConsumer();
         }
     });

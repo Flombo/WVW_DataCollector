@@ -1,14 +1,11 @@
 const express = require('express');
 const app = express();
 const http = require('http');
+const https = require('https');
 const server = http.createServer(app);
-const request=require('request');
 const { Kafka } = require('kafkajs')
 const cron = require('node-cron');
-app.set('view engine', 'ejs');
 app.use(express.static(__dirname));
-const { Server } = require("socket.io");
-const io = new Server(server);
 
 const kafka = new Kafka({
     clientId: 'producersite',
@@ -19,6 +16,12 @@ let producerMatchMap = new Map();
 
 const wvwURL = "https://api.guildwars2.com/v2/wvw/matches/";
 
+/***
+ * Inits for all 5 eu-matches kafka-producers
+ * and adds them for later calls into the producerMatchMap
+ *
+ * @returns {Promise<void>}
+ */
 async function initProducer(){
     let producerMatch2_1 = kafka.producer();
     await producerMatch2_1.connect();
@@ -43,56 +46,76 @@ async function initProducer(){
 
 initProducer();
 
+/***
+ * calls foreach producer the match-api and the worlds-api.
+ * the worlds-attribute of the match-object will be overridden by the fetched worlds.
+ * In the end the match-object will be sent to kafka.
+ */
 function callAPI(){
     producerMatchMap.forEach((producer, topicName) => {
-        request.get(wvwURL + topicName + '.json', async (err,res,body) => {
+        https.get(wvwURL + topicName + '.json', res => {
             try {
-                if (err) console.log(err);
 
-                await producer.send({
-                    topic: topicName,
-                    messages: [
-                        {
-                            value : body
-                        }
-                    ]
+                let body = "";
+
+                res.on("data", (data) => {
+                    body += data;
+                });
+
+                res.on("end", () => {
+                    try {
+                        const matchJSON = JSON.parse(body);
+
+                        const redID = matchJSON.worlds.red;
+                        const blueID = matchJSON.worlds.blue;
+                        const greenID = matchJSON.worlds.green;
+
+                        const worldURL = `https://api.guildwars2.com/v2/worlds?ids=${redID},${blueID},${greenID}`;
+
+                        https.get(worldURL, res => {
+
+                            let worldsBody = "";
+
+                            res.on("data", (data) => {
+                                worldsBody += data;
+                            });
+
+                            res.on("end", async () => {
+
+                                const worlds = JSON.parse(worldsBody);
+
+                                if (worlds.length === 3) {
+                                    matchJSON.worlds.red = worlds[0];
+                                    matchJSON.worlds.blue = worlds[1];
+                                    matchJSON.worlds.green = worlds[2];
+                                }
+
+                                await producer.send({
+                                    topic: topicName,
+                                    messages: [
+                                        {
+                                            value : JSON.stringify(matchJSON)
+                                        }
+                                    ]
+                                });
+                            });
+
+                        });
+                    } catch (error) {
+                        console.error(error.message);
+                    }
                 });
 
             } catch (exception) {
-                console.log(exception);
+                console.log('error ' + exception);
             }
         });
     });
 }
 
-cron.schedule('* * * * * *', function() {
+/*cron job calls every half minute the callApi function*/
+cron.schedule('*/30 * * * * *', function() {
     callAPI();
-});
-
-app.get('/', (req, res) => {
-   res.render('index', { dataFetchError : false });
-});
-
-async function fetchVictoryPointsByConsumer() {
-    const consumer = kafka.consumer({groupId: 'test-group'})
-
-    await consumer.connect()
-    await consumer.subscribe({topic: '2-1', fromBeginning: true})
-
-    await consumer.run({
-        eachMessage : async ({message}) => {
-            io.emit('sentscores', message.value.toString());
-        },
-    });
-}
-
-io.on('connection', (socket) => {
-    console.log('a user connected');
-    socket.on('connected', (msg) => {
-        if(msg === 'scores') {
-            fetchVictoryPointsByConsumer();
-        }
-    });
 });
 
 server.listen(3000, '141.28.73.146');

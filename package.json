@@ -17,12 +17,10 @@
   },
   "homepage": "https://github.com/Flombo/WVW_DataCollector#readme",
   "dependencies": {
-    "chart.js": "^3.6.2",
-    "ejs": "^3.1.6",
     "express": "^4.17.1",
     "kafkajs": "^1.15.0",
     "node-cron": "^3.0.0",
-    "socket.io": "^4.4.0"
+    "node-fetch": "^3.1.0"
   },
   "devDependencies": {
     "request": "^2.88.2"

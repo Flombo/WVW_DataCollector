@@ -18,11 +18,9 @@
   "homepage": "https://github.com/Flombo/WVW_DataCollector#readme",
   "dependencies": {
     "express": "^4.17.1",
+    "http": "^0.0.1-security",
     "kafkajs": "^1.15.0",
-    "node-cron": "^3.0.0",
-    "node-fetch": "^3.1.0"
-  },
-  "devDependencies": {
-    "request": "^2.88.2"
+    "luxon": "^2.3.0",
+    "node-cron": "^3.0.0"
   }
 }

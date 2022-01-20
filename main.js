@@ -5,6 +5,7 @@ const https = require('https');
 const server = http.createServer(app);
 const { Kafka } = require('kafkajs')
 const cron = require('node-cron');
+const { DateTime } = require("luxon");
 app.use(express.static(__dirname));
 
 const kafka = new Kafka({
@@ -135,6 +136,8 @@ async function callMapAPI(matchJSON, producer, topicName) {
                     matchJSON.maps[2].name = mapsBody[2].name;
                     matchJSON.maps[3].name = mapsBody[3].name;
                 }
+
+                matchJSON.timestamp = DateTime.now();
 
                 await sendMessageToKafka(matchJSON, producer, topicName);
             } catch (exception) {

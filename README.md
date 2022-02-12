@@ -16,3 +16,4 @@
     ```
     
   Alternatively you could install a process manager like pm2 for managing the backend.
+> 2022 Shirin Mian & Florian Pfützenreuter

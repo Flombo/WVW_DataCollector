@@ -6,10 +6,10 @@
 # Instructions
 
   1. Install dependencies
-    ```
+
     Go to WvW_DataCollector root directory.
     npm install  
-    ```
+
   2. Start the backend.
     ```
     node main.js
